@@ -3,7 +3,7 @@ using Newtonsoft.Json;
 
 namespace Lime.SecurityWrapper.CSLWrapper;
 
-public class Protector
+public class Protector : IDisposable
 {
     public AES256KeyBasedProtector core { get; set; }
     public byte[] key {
@@ -12,6 +12,9 @@ public class Protector
             key = value;
         }
     }
+
+    //this does nothing and we do not need it to due to the fact that there is no unamaged code here
+    public void Dispose() {}
 
     public Protector(byte[] key)
     {
@@ -28,5 +31,12 @@ public class Protector
     {
         string str = JsonConvert.SerializeObject(data);
         return await core.Protect(str);
+    }
+
+    public async Task<T> Decrypt<T>(string data)
+    {
+        string decrypted = await core.Unprotect(data);
+        T ret = JsonConvert.DeserializeObject<T>(decrypted) ?? throw new NullReferenceException();
+        return ret;
     }
 }
